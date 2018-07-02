@@ -1,14 +1,14 @@
 import os
-import sys
 import discord
-import log
-from datetime import date, datetime
+from log import Log
+from datetime import date, datetime, timedelta
+from discord import Message
 from discord.ext import commands
 
 logs = {}
 
-timeout = 3000
-TOKEN = os.environ.get('TOKEN')
+timeout = 3
+TOKEN = "NDYyMzM0OTUzNDgxMzA2MTEy.DhvbmA.YmBcAt3980kofhSOazt5kOd4R-s"#os.environ.get('TOKEN')
 
 bot = commands.Bot(command_prefix='!', description='A spam bot for Eric!')
 
@@ -22,26 +22,29 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="Whackamole with spammers"))
 
 @bot.event
-async def on_message(message):
+async def on_message(ctx):
+    print("message received")
     #ignore this bot's own messages
-    #if message.author == client.user:
-     #   return
+    if ctx.author == bot.user:
+        return
     
-    if(message.author.username in logs):
-        now = datetime.now()
-        delta = now-logs[message.author.username].lastMessage
-        if(delta.microsecond < timeout):
-            await message.delete()
+    if ctx.author.name in logs:
+        delta = ctx.created_at-logs[ctx.author.name].lastMessage
+        if(delta.seconds < timeout):
+            await ctx.channel.send('{0} earns a spamwich!'.format(ctx.author))
+            await ctx.delete()
             
-        logs[message.author.username].lastMessage = datetime.now()
+        logs[ctx.author.name].lastMessage = ctx.created_at
     else:
-        logs[message.author.username] = Log(datetime.now())
-        pass
+        logs[ctx.author.name] = Log(ctx.created_at)
 
 @bot.command()
 async def ping(ctx):
-    m = await ctx.send('Ping?')
-    ctx.send('Pong!')
+    print('ping received')
+    m = await ctx.channel.send('Ping?')
+    print("ping sent")
+    a = ctx.channel.send('Pong!')
+    print("pong sent")
     #{m.createdTimeStamp - ctx.createdTimestamp}ms {Math.round(client.ping)}
 
 @bot.command()
@@ -68,5 +71,4 @@ async def help(ctx):
     await ctx.send(embed=embed)
 
 # Run bot
-sys.stdout.write(TOKEN)
 bot.run(TOKEN)
