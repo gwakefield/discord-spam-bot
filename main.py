@@ -19,24 +19,24 @@ async def on_ready():
     print(bot.user.id)
     print('------')
 
-    await bot.change_presence(game=discord.Game(name='Spamwatch v0.1'))
+    await bot.change_presence(activity=discord.Game(name='Spamwatch v0.1'))
 
 @bot.event
 async def on_message(message):
     #ignore this bot's own messages
     if message.author == bot.user:
         return
-    
+
     if message.author.name in logs:
-        delta = message.timestamp-logs[message.author.name].lastMessage
+        delta = message.created_at-logs[message.author.name].lastMessage
         if(delta.seconds < timeout):
             logs[message.author.name].violations += 1
-            await bot.delete_message(message)
-            await bot.send_message(message.channel, '{0} earns a spamwich!'.format(message.author))
+            await message.delete()
+            await message.channel.send('{0} earns a spamwich!'.format(message.author))
         
-        logs[message.author.name].lastMessage = message.timestamp
+        logs[message.author.name].lastMessage = message.created_at
     else:
-        logs[message.author.name] = Log(message.timestamp)
+        logs[message.author.name] = Log(message.created_at)
 
     # Since we have on_message, need to call the bot commands here
     await bot.process_commands(message)
@@ -44,10 +44,10 @@ async def on_message(message):
 @bot.command(pass_context=True)
 async def ping(ctx):
     start = datetime.now()
-    m = await bot.send_message(ctx.message.channel, 'Ping?')
+    m = await ctx.send('Ping?')
     span = datetime.now()-start
     ms = span.microseconds/1000
-    await bot.edit_message(m, 'Pong! {0}ms'.format(ms))
+    await m.edit(content='Pong! {0}ms'.format(ms))
 
 @bot.command(pass_context=True)
 async def spam(ctx):
@@ -55,34 +55,34 @@ async def spam(ctx):
     if name in logs:
         log = logs[name]
         if log.violations > 0:
-            await bot.send_message(ctx.message.channel, '{0} has {1.violations} violations.'.format(name, log))
+            await ctx.send('{0} has {1.violations} violations.'.format(name, log))
         else:
-            await bot.send_message(ctx.message.channel, '{0} has no violations yet. Good job!'.format(name))
+            await ctx.send('{0} has no violations yet. Good job!'.format(name))
     else:
-        bot.send_message(ctx.message.channel, '???')
+        ctx.send('???')
 
 
 @bot.command()
-async def add(left : int, right : int):
+async def add(ctx, left : int, right : int):
     """Adds two numbers together."""
-    await bot.say(left + right)
+    await ctx.send(left + right)
 
 @bot.command()
-async def roll(dice : str):
+async def roll(ctx, dice : str):
     """Rolls a dice in NdN format."""
     try:
         rolls, limit = map(int, dice.split('d'))
     except Exception:
-        await bot.say('Format has to be in NdN!')
+        await ctx.send('Format has to be in NdN!')
         return
 
     result = ', '.join(str(random.randint(1, limit)) for r in range(rolls))
-    await bot.say(result)
+    await ctx.send(result)
 
 @bot.command()
-async def threshold(span : int):
+async def threshold(ctx, span : int):
     timeout = span
-    await bot.say('Updated spam threshold to {0} seconds.'.format(timeout))
+    await ctx.send('Updated spam threshold to {0} seconds.'.format(timeout))
 
 bot.remove_command('help')
 
@@ -95,7 +95,7 @@ async def help(ctx):
     embed.add_field(name="!spam", value="Check the number of violations you have", inline=False)
     #threshold hidden command
 
-    await bot.send_message(ctx.message.channel, embed=embed)
+    await ctx.send(embed=embed)
 
 # Run bot
 bot.run(TOKEN)
