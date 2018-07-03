@@ -90,8 +90,8 @@ bot.remove_command('help')
 async def help(ctx):
     embed = discord.Embed(title="Spam Bot", description="LESS Eric! :) List of commands are:", color=0xeee657)
 
+    embed.add_field(name="!help", value="Details on the anti-Eric bot", inline=False)
     embed.add_field(name="!ping", value="Check the latency", inline=False)
-    embed.add_field(name="!info", value="Details on the anti-Eric bot", inline=False)
     embed.add_field(name="!spam", value="Check the number of violations you have", inline=False)
     #threshold hidden command
 
